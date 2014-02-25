@@ -2,7 +2,7 @@
 
 class Toro
 {
-    protected static $path_info;
+    protected static $path_info = '';
 
     public static function serve($routes)
     {
