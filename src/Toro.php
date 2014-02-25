@@ -2,29 +2,31 @@
 
 class Toro
 {
+    protected static $path_info;
+
     public static function serve($routes)
     {
         ToroHook::fire('before_request', compact('routes'));
 
         $request_method = strtolower($_SERVER['REQUEST_METHOD']);
-        $path_info = '/';
+        self::$path_info = '/';
         if (!empty($_SERVER['PATH_INFO'])) {
-            $path_info = $_SERVER['PATH_INFO'];
+            self::$path_info = $_SERVER['PATH_INFO'];
         }
         else if (!empty($_SERVER['ORIG_PATH_INFO']) && $_SERVER['ORIG_PATH_INFO'] !== '/index.php') {
-            $path_info = $_SERVER['ORIG_PATH_INFO'];
+            self::$path_info = $_SERVER['ORIG_PATH_INFO'];
         }
         else {
             if (!empty($_SERVER['REQUEST_URI'])) {
-                $path_info = (strpos($_SERVER['REQUEST_URI'], '?') > 0) ? strstr($_SERVER['REQUEST_URI'], '?', true) : $_SERVER['REQUEST_URI'];
+                self::$path_info = (strpos($_SERVER['REQUEST_URI'], '?') > 0) ? strstr($_SERVER['REQUEST_URI'], '?', true) : $_SERVER['REQUEST_URI'];
             }
         }
         
         $discovered_handler = null;
         $regex_matches = array();
 
-        if (isset($routes[$path_info])) {
-            $discovered_handler = $routes[$path_info];
+        if (isset($routes[self::$path_info])) {
+            $discovered_handler = $routes[self::$path_info];
         }
         else if ($routes) {
             $tokens = array(
@@ -34,7 +36,7 @@ class Toro
             );
             foreach ($routes as $pattern => $handler_name) {
                 $pattern = strtr($pattern, $tokens);
-                if (preg_match('#^/?' . $pattern . '/?$#', $path_info, $matches)) {
+                if (preg_match('#^/?' . $pattern . '/?$#', self::$path_info, $matches)) {
                     $discovered_handler = $handler_name;
                     $regex_matches = $matches;
                     break;
@@ -86,6 +88,10 @@ class Toro
     private static function is_xhr_request()
     {
         return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest';
+    }
+
+    public static function get_request_uri(){
+        return self::$path_info;
     }
 }
 
